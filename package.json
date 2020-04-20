@@ -1,0 +1,17 @@
+{
+  "name": "mindsdb_covid_data",
+  "version": "1.0.0",
+  "description": "MindsDB Covid json data uploader",
+  "main": "index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "private",
+  "dependencies": {
+    "aws-sdk": "^2.656.0",
+    "dotenv": "^8.2.0",
+    "firebase-admin": "^8.10.0"
+  }
+}
