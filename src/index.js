@@ -24,7 +24,7 @@ admin.initializeApp({
 
 const firestore = admin.firestore()
 
-const sendToS3 = () => {
+const sendToS3 = (fileName) => {
   const ID = process.env.ENV_AWS_ACCESS_KEY_ID
   const SECRET = process.env.ENV_AWS_SECRET_ACCESS_KEY
   const BUCKET_NAME = process.env.ENV_AWS_S3_BUCKET_NAME
@@ -35,7 +35,6 @@ const sendToS3 = () => {
   })
 
   // Read content from the file
-  const fileName = process.env.ENV_LOCAL_FILE_NAME
   const fileContent = fs.readFileSync(fileName)
 
   // Setting up S3 upload parameters
@@ -51,35 +50,52 @@ const sendToS3 = () => {
       console.error('s3.upload', err)
       throw err
     }
-    console.log(`File uploaded successfully. ${data.Location}`)
+    console.log(`File ${fileName} uploaded successfully. ${data.Location}`)
   })
 }
 
-const generateFile = (data) => {
-  fs.writeFile(process.env.ENV_LOCAL_FILE_NAME, JSON.stringify(data), (err) => {
+const generateFile = (data, fileName) => {
+  fs.writeFile(fileName, JSON.stringify(data), (err) => {
     if (err) {
-      console.error('generateFile', err)
+      console.error(`generateFile - ${fileName}`, err)
       throw err
     }
 
-    console.log('File created successfully')
-    sendToS3()
+    console.log(`File ${fileName} created successfully`)
+    sendToS3(fileName)
   })
 }
 
-const getAnswers = async () => {
+const getCovidData = async () => {
+  /* answersCollection */
   const answersCollection = firestore.collection('answers')
-  const snapshot = await answersCollection.get()
+  const answersSnapshot = await answersCollection.get()
 
-  const data = {}
-  snapshot.forEach(doc => {
+  const answersData = []
+  answersSnapshot.forEach(doc => {
     const docData = doc.data()
     docData.submittedDateFormatted = docData.submittedDate ? docData.submittedDate.toDate() : ''
-    data[doc.id] = docData
+    answersData.push({ id: doc.id, ...docData })
   })
 
-  console.log('data generated successfully')
-  generateFile(data)
+  console.log('answers data generated successfully')
+  generateFile(answersData, process.env.ENV_LOCAL_FILE_NAME_ANSWERS)
+  /* answersCollection */
+
+  /* countersCollection */
+  const countersCollection = firestore.collection('counters')
+  const countersSnapshot = await countersCollection.get()
+
+  const countersData = []
+  countersSnapshot.forEach(doc => {
+    const docData = doc.data()
+    docData.submittedDateFormatted = docData.submittedDate ? docData.submittedDate.toDate() : ''
+    countersData.push({ id: doc.id, ...docData })
+  })
+
+  console.log('counters data generated successfully')
+  generateFile(countersData, process.env.ENV_LOCAL_FILE_NAME_COUNTERS)
+  /* countersCollection */
 }
 
-getAnswers()
+getCovidData()
